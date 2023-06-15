@@ -1,0 +1,661 @@
+<!doctype html>
+<html lang="en"> 
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="initial-scale=1,user-scalable=no,maximum-scale=1,width=device-width">
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <link rel="stylesheet" href="css/leaflet.css">
+        <link rel="stylesheet" href="css/qgis2web.css">
+        <link rel="stylesheet" href="css/fontawesome-all.min.css">
+        <link rel="stylesheet" href="js/leaflet.groupedlayercontrol.min.css">
+        <link rel="stylesheet" href="css/leaflet-control-geocoder.Geocoder.css">
+        <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.3.0/dist/MarkerCluster.css" />
+        <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.3.0/dist/MarkerCluster.Default.css" />
+      
+            <!-- Load Leaflet from CDN-->
+        <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+        <script src="https://unpkg.com/leaflet/dist/leaflet-src.js"></script>
+
+        <!-- Load Esri Leaflet from CDN -->
+        <script src="https://unpkg.com/esri-leaflet"></script>
+
+        <!-- Esri Leaflet Geocoder -->
+        <link
+        rel="stylesheet"
+        href="https://unpkg.com/esri-leaflet-geocoder/dist/esri-leaflet-geocoder.css"
+        />
+        <script src="https://unpkg.com/esri-leaflet-geocoder"></script>
+        <style>
+        </style>
+        <title >Location Analysis Tool</title>
+    </head>
+    <body>
+        <div class="Popup" id="Popup1">Business Potential Index: suitability of each cell for the intended use</div>
+        <div class="Popup" id="Popup2">Easiness of getting by road to each cell </div>
+        <div class="Popup" id="Popup3">Popup 3</div>
+        <div class="Popup" id="Popup4">Popup 4</div>
+        <div class="Popup" id="Popup5">The average of 8 growth measure, including population, business, and permits</div>
+        <div id = "header">
+            <div id= logo>
+                <img src = "css/images/EstTecLogoFinalGris.png" alt = "eti_logo" style="width:120px;height:60px;">
+            </div>
+                <h1 id="title">
+                    Location Analysis Tool
+                </h1>
+            <div id= logo>
+                <img src = "css/images/selectos_logo.png" alt = "eti_logo" style="float:right;height:60px;">
+            </div>
+
+        </div>
+        <div class="active_layer"> 
+            <div style = "text-align: center; margin: 0"> Active Layer: </div>
+            <h2 id="active_layer" style = "text-align: center; margin: 0">
+                <span id="layer_name"></span>
+            </h2>
+        </div>
+        <!-- <button id= "openButton" class="openbtn" type='button' onclick="openNav()">☰ Expand Option Panel</button> -->
+        <div id = "main_block" class = "row">
+            <div id="tools" class = "tools">
+                <div id= "leyenda_values" style="display:table;padding: 20px">
+                    <table id="legend_table_values"> 
+                        <thead>
+                            <tr>
+                                <th>Map Color Legend</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="legend_table_body_values">
+                        </tbody>
+                    </table>
+                    <!-- <img src = "css/images/leyenda1.png" alt = "eti_logo" style="width:95%;height:120px;padding: 6px;padding-top:12px"> -->
+                </div>
+                <div id= "leyenda" style="display:table;padding: 20px"> 
+                    <table id="legend_table">
+                        <thead>
+                            <tr>
+                                <th>Supermarket</th>
+                                <th>Legend</th>
+                            </tr>
+                        </thead>
+                        <tbody id="legend_table_body">
+                        </tbody>
+                    </table>
+                    <!-- <img src = "css/images/leyenda1.png" alt = "eti_logo" style="width:95%;height:120px;padding: 6px;padding-top:12px"> -->
+                </div>
+
+                <div id="map_settings" style = "padding: 6px">  
+                    <label for="basemaps"  style="display:block;text-align:center;font-size:14px;color:white">Change Base Map: </label>
+                    <select id = "basemaps" style="width:100%" onchange="getBasemap()">   
+                        <option value ="Esri.WorldStreetMap">Esri.WorldStreetMap</option>
+                        <option value ="Esri.WorldGrayCanvas">Esri.WorldGrayCanvas</option>
+                        <option value ="Esri.WorldTopoMap">Esri.WorldTopoMap</option> 
+                        <option value ="CartoDB.DarkMatter">CartoDB.DarkMatter</option> 
+                        <option value ="OpenStreetMap.Mapnik">OpenStreetMap.Mapnik</option>
+                        <option value ="OpenStreetMap.DE">OpenStreetMap.DE</option>
+                        <option value ="OpenTopoMap">OpenTopoMap</option>
+                        <option value ="Stadia.AlidadeSmoothDark">Stadia.AlidadeSmoothDark</option>
+                        <option value ="USGS.USImageryTopo">USGS.USImageryTopo</option> 
+                        <option value ="None">None</option>
+                    </select>
+                </div> 
+
+            </div>
+            <div 
+                id="map">
+            </div> 
+        </div>
+        <div class= "dividing_bar"></div>
+        <div class="flex-container">
+            <div class="col-head"><p>Move slider to the right to increase importance of criteria</p>
+            </div>
+            <div class="slidecontainer">
+                <p>Distance to all supermarkets</p>
+                <input id="dist_all_super" type="range" min="1" max="100" value="10" oninput="getSlideValueAllSuper()">
+            </div>
+            <div class="slidecontainer">
+                <p>Distance to Selectos</p>
+                <input id="dist_selectos" type="range" min="1" max="100" value="10" oninput="getSlideValueSelectos()">
+            </div>
+            <div class="slidecontainer">
+                <p>Growth Index</p>
+                <input id="change_index_slider" type="range" min="1" max="100" value="10" oninput="getSlideValueChange()">
+            </div>
+
+        </div> 
+        <br>
+        <script src="js/qgis2web_expressions.js"></script>
+        <script src="js/leaflet.js"></script>
+        <script src="js/leaflet.groupedlayercontrol.min.js"></script>
+        <script src="js/leaflet.rotatedMarker.js"></script>
+        <script src="js/leaflet-svg-shape-markers.min.js"></script>
+        <script src="js/leaflet.pattern.js"></script>
+        <script src="js/leaflet-hash.js"></script>
+        <script src="js/Autolinker.min.js"></script>
+        <script src="js/rbush.min.js"></script>
+        <script src="js/labelgun.min.js"></script>
+        <script src="js/labels.js"></script> 
+        <script src="js/jquery-3.6.1.min.js"></script>
+        <script src="data/grid3.js"></script>
+        <script src="data/accessibility_index.js"></script>
+        <script src="data/supermercados_v2.js"></script>
+        <script src="data/selectos_average_distance_bpi_data_removed.js"></script>
+        <script src="js/leaflet-providers.js"></script>
+        <script src="js/leaflet-control-geocoder.Geocoder.js"></script>
+        <script src='https://api.mapbox.com/mapbox.js/plugins/leaflet-fullscreen/v1.0.1/Leaflet.fullscreen.min.js'></script>
+        <script src="https://unpkg.com/leaflet.markercluster@1.3.0/dist/leaflet.markercluster.js"></script>
+        <link href='https://api.mapbox.com/mapbox.js/plugins/leaflet-fullscreen/v1.0.1/leaflet.fullscreen.css' rel='stylesheet' />
+        <script src="https://unpkg.com/leaflet.featuregroup.subgroup@1.0.2/dist/leaflet.featuregroup.subgroup.js"></script>
+        <script>
+        
+        var selectElement = {'distance_all': 10,
+                            'distance_selectos':10,
+                            'change_index': 10}
+
+        function title_change(output){
+            if (!(cadenas_unique.includes(output)))
+                document.getElementById("layer_name").innerHTML = output
+            }
+
+    
+        function getSlideValueAllSuper() {
+            
+            selectElement['distance_all'] = document.getElementById('dist_all_super').value;
+            weighted_average = weighted_avg_layer(selectElement)
+        }
+        function getSlideValueSelectos() {
+            
+            selectElement['distance_selectos'] = document.getElementById('dist_selectos').value;
+            weighted_average = weighted_avg_layer(selectElement)
+        }
+        function getSlideValueChange() {
+            
+            selectElement['change_index'] = document.getElementById('change_index_slider').value;
+            weighted_average = weighted_avg_layer(selectElement)
+        }
+        function legend_popup(name_of_layer, div_id_val){
+            var map_span_Val = `//span[contains(text(), '${name_of_layer}')]`
+            var matching_element = document.evaluate(map_span_Val, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+            span_popup = document.getElementById(div_id_val)
+            matching_element.appendChild(span_popup)
+            matching_element.onmouseover = function(){
+                span_popup.className = 'PopupHover';
+                matching_element.style.position = 'relative'
+            }
+            matching_element.onmouseout = function(){
+                span_popup.className = 'Popup';
+            }
+        }
+        function getRandomColor() {
+            var letters = '0123456789ABCDEF';
+            var color = '#';
+            for (var i = 0; i < 6; i++) {
+                color += letters[Math.floor(Math.random() * 16)];
+            }
+            return color;
+            }
+        function weighted_avg_layer(selectElement) { 
+            if (map.hasLayer(layer)){
+                map.removeLayer(layer)
+            }
+            for (let i =0; i < gb_lasso_geography.length; i++){
+                if (gb_lasso_geography[i]['gb']  > weighted_average_filter_val){
+                    weigthed_average_Val = ((gb_lasso_geography[i]['gb'] *.70) + (gb_lasso_geography[i]['mean_minutes_supermercados']*( selectElement['distance_all']*.01)) + (gb_lasso_geography[i]['mean_minutes_selectos'] *(selectElement['distance_selectos']*.01)) + (gb_lasso_geography[i]['change_average'] *(selectElement['change_index']*.01)))/ ( .7 +( selectElement['distance_all']*.01) + (selectElement['distance_selectos']*.01) + (selectElement['change_index']*.01) )
+                    gb_lasso_geography[i]['weighted_average'] = (weigthed_average_Val)
+                }
+            } 
+            weighted_avg_color_scheme = color_scheme_list(gb_lasso_geography, 'weighted_average' )
+            var layer = new L.geoJson(gb_lasso_geography, {
+                attribution: '',
+                interactive: true,
+                layerName: 'weighted_average_layer',
+                pane: 'gb_lasso_geography',
+                opacity: 0.0,
+                filter: function (feature, layer){
+                    return feature['gb'] > weighted_average_filter_val
+                },
+                onEachFeature: function(feature, layer){
+                    each_feacture = pop_ups(feature, layer, 'weighted_average', 'Weighted Average')
+                },
+                style: function(feature){
+                    acc_style = map_style(feature, 'weighted_average', weighted_avg_color_scheme, 'gb_lasso_geography')
+                    return acc_style
+                }
+            })
+        return layer
+        };
+
+        function supermarket_layer(output, color) { 
+            layer = new L.geoJson(supermercados_v2, {
+                filter: function (feature) {
+                        return feature.properties.CADENA == output     
+                },
+                attribution: '',
+                interactive: true,
+                pane:'supermarket_locations',
+                onEachFeature: function(feature, layer){
+                    each_feacture = pop_ups(feature.properties, layer, 'CADENA', 'Supermarket')
+                },
+                pointToLayer: function (feature, latlng) {
+                    label = String(feature.properties.CADENA).substring(0,2);
+                    var context = {
+                        feature: feature,
+                        variables: {}
+                    };
+                    var circle_marker = L.circleMarker(latlng, point_layer_style(feature,   cadenas_color_scheme, 'CADENA')).bindTooltip("<span class= 'my-labels' style='text-align: center;width:20px;display:inline-block;border-radius: 50%;background-color:"+ color+ "'>" +label + "</span>", {permanent:true , direction: "center", className:'my-labels', opacity:0.7, background: color }).openTooltip();
+                    return circle_marker
+                }
+            })
+
+        return layer
+        };
+        
+        function geography_join(data_layer_property, join_col){
+            let geography_list = []
+            for (let i = 0; i <grid3.features.length; i++){
+                geography_list.push({
+                    ...grid3.features[i],
+                    ...(data_layer_property.find((itmInner) => itmInner[join_col] === grid3.features[i].properties.GRID_ID))}
+                            )}
+            return geography_list
+        }
+        
+        function create_layer(layer_geography, pane, column_name,input_list, layer_name){
+            var new_layer = new L.geoJson(layer_geography, {
+                attribution: '',
+                interactive: true,
+                layerName: layer_name,
+                pane: pane,
+                opacity: 0.0,
+                filter:function(feature, lauyer){
+                            return feature[column_name] != null
+                    },
+                onEachFeature: function(feature, layer){
+                    each_feacture = pop_ups(feature, layer, column_name, layer_name)
+                },
+                style: function(feature){
+                    acc_style = map_style(feature, column_name, input_list, pane)
+                    return acc_style
+                }
+            });
+            return new_layer
+
+        }
+
+        function pop_ups(feature, layer, col_name, name) {
+            if (typeof feature[col_name] === "number") {
+                var popupContent = 
+                '<table style = "border: 1px solid black">\
+                    <tr>\
+                        <th ><strong>' + name +'</strong></th>\
+                        <th ><strong> </strong></th>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="1">Percentile:</td>\
+                        <td colspan="1">' + (feature[col_name] !== null ? autolinker.link((feature[col_name]*100).toFixed(2).toLocaleString()) : '') + '%</td>\
+                    </tr>\
+                </table>';
+            }
+            else {
+
+                var popupContent = 
+                '<table style = "border: 1px solid black">\
+                    <tr>\
+                        <th ><strong>' + name +'</strong></th>\
+                        <th ><strong> </strong></th>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="1">Value:</td>\
+                        <td colspan="1">' + (feature[col_name] !== null ? autolinker.link((feature[col_name]).toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            }
+            layer.bindPopup(popupContent, {maxHeight: 400, maxWidth:600});
+        }
+        function color_scheme_list(column_data, column_name){
+            let all_data_from_col = []
+            //let column_to_vizualize = data.start.properties[i]['Prediction GB']
+            if (column_name !== null){
+                for (let i = 0; i< column_data.length; i++){
+                    all_data_from_col.push(column_data[i][column_name])}
+            } else{
+                all_data_from_col = column_data
+            }
+
+            var prediction_list = all_data_from_col.filter(function(el) {
+                //return el.length && el==+el;
+                return !isNaN(parseFloat(el)) && isFinite(el);
+            });
+            var color_scheme = [[0, 'rgb(255,245,240,255)'], [1, 'rgb(255,242,235,255)'], [2, 'rgb(255,238,231,255)'], [3, 'rgb(255,235,226,255)'], [4, 'rgb(254,232,221,255)'], [5, 'rgb(254,229,216,255)'], [6, 'rgb(254,225,212,255)'], [7, 'rgb(254,220,205,255)'], [8, 'rgb(253,215,197,255)'], [9, 'rgb(253,209,190,255)'], [10, 'rgb(253,203,182,255)'], [11, 'rgb(253,197,174,255)'], [12, 'rgb(252,191,167,255)'], [13, 'rgb(252,185,159,255)'], [14, 'rgb(252,179,152,255)'], [15, 'rgb(252,172,144,255)'], [16, 'rgb(252,166,137,255)'], [17, 'rgb(252,160,130,255)'], [18, 'rgb(252,153,122,255)'], [19, 'rgb(252,147,115,255)'], [20, 'rgb(252,140,108,255)'], [21, 'rgb(252,134,102,255)'], [22, 'rgb(252,128,96,255)'], [23, 'rgb(251,122,90,255)'], [24, 'rgb(251,115,83,255)'], [25, 'rgb(251,109,77,255)'], [26, 'rgb(250,102,72,255)'], [27, 'rgb(248,95,67,255)'], [28, 'rgb(246,87,62,255)'], [29, 'rgb(244,80,57,255)'], [30, 'rgb(242,73,53,255)'], [31, 'rgb(241,65,48,255)'], [32, 'rgb(238,58,44,255)'], [33, 'rgb(233,53,41,255)'], [34, 'rgb(227,47,39,255)'], [35, 'rgb(221,42,37,255)'], [36, 'rgb(216,36,34,255)'], [37, 'rgb(210,31,32,255)'], [38, 'rgb(204,25,30,255)'], [39, 'rgb(198,23,28,255)'], [40, 'rgb(191,21,27,255)'], [41, 'rgb(185,20,25,255)'], [42, 'rgb(179,18,24,255)'], [43, 'rgb(172,17,22,255)'], [44, 'rgb(166,15,21,255)'], [45, 'rgb(154,12,20,255)'], [46, 'rgb(141,9,18,255)'], [47, 'rgb(128,6,16,255)'], [48, 'rgb(116,3,15,255)'], [49, 'rgb(0,0,0,255)']]            
+            let interval_val = (Math.max(...prediction_list) - Math.min(...prediction_list))/ color_scheme.length
+            //color_scheme = color_scheme.reverse()
+            let style_list = []
+            for (var i = 0; i < color_scheme.length; i++){
+                if (i == 0){
+                    style_list.push([color_scheme[i][1].replace(',255)', ', .8)'), Math.min(...prediction_list) , Math.min(...prediction_list) + interval_val ])
+                }
+                else if(i == color_scheme.length){
+                    style_list.push([color_scheme[i][1].replace(',255)', ', .8)'), Math.max(...prediction_list) - interval_val , Math.max(...prediction_list) ])
+                }
+                else{
+                style_list.push([color_scheme[i][1].replace(',255)', ', .8)'), Math.min(...prediction_list) + (interval_val * i) , Math.min(...prediction_list) + (interval_val * (i+1))])
+                }
+            }
+            return style_list
+        }
+        function point_layer_style(feature, input_list, column){
+            for (let i = 0; i < input_list.length; i++ ){
+                if (feature.properties[column] == input_list[i][0]){
+                    return{
+                        radius: 4,
+                        opacity: 1,
+                        color: 'rgba(93,93,93,0)',
+                        pane:'supermarket_locations',
+                        dashArray: '',
+                        lineCap: 'butt',
+                        lineJoin: 'miter',
+                        weight: 1,
+                        fill: true,
+                        fillOpacity: 1,
+                        fillColor: 'rgba(93,93,93,0)',
+                        interactive: true,
+                    }  
+                }
+            }
+        }
+        function map_style(feature, column, input_list, pane) {
+            for (let i = 0; i < input_list.length; i++){
+                if (feature[column] >= input_list[i][1] && feature[column]  <= input_list[i][2] ) { 
+                    return {
+                        pane: pane,
+                        opacity: 1,
+                        //color: style_list[i][0],
+                        color: 'rgba( 27, 109, 164, 0.0)',
+                        dashArray: '',
+                        lineCap: 'butt',
+                        lineJoin: 'miter',
+                        weight: 1, 
+                        fill: true,
+                        fillOpacity: 1,
+                        fillColor: input_list[i][0],
+                        interactive: true,
+                    }
+                }
+
+            }
+
+        }
+        var map = L.map('map').setView([18.45, -66.26767], 13)
+        var hash = new L.Hash(map);
+        map.attributionControl.setPrefix('<a href="https://github.com/tomchadwin/qgis2web" target="_blank">qgis2web</a> &middot; <a href="https://leafletjs.com" title="A JS library for interactive maps">Leaflet</a> &middot; <a href="https://qgis.org">QGIS</a>');
+        var autolinker = new Autolinker({truncate: {length: 30, location: 'smart'}});
+        var bounds_group = new L.featureGroup([]);
+        function setBounds() {
+        }
+        
+
+
+        var basemap_layer = L.tileLayer.provider('Esri.WorldGrayCanvas');
+        basemap_layer.addTo(map);       
+        var grid3;
+        var selectos_bpi;
+        var supermercados_v2;
+        let gb_lasso_geography = geography_join(selectos_bpi.start.properties, 'grid_id');
+        var prediction_style_color_scheme = color_scheme_list(selectos_bpi.start.properties, 'gb')
+        var supermarkets_distance_color_scheme = color_scheme_list(selectos_bpi.start.properties, 'mean_minutes_supermercados')
+        var selectos_distance_color_scheme = color_scheme_list(selectos_bpi.start.properties, 'mean_minutes_selectos')
+        var change_variables_color_scheme = color_scheme_list(selectos_bpi.start.properties, 'change_average')
+
+        var accessibility_index;
+        let accessibility_geography = geography_join(accessibility_index.start.properties, 'GRID_ID')
+        var accessibility_style = color_scheme_list(accessibility_index.start.properties, 'accessibility_index')
+        
+        map.createPane('gb_lasso_geography');
+        map.getPane('gb_lasso_geography').style.zIndex = 400;
+        map.getPane('gb_lasso_geography').style['mix-blend-mode'] = 'normal';
+
+        var layer_gb_lasso = create_layer(gb_lasso_geography, 'gb_lasso_geography', 'gb', prediction_style_color_scheme, 'BPI Index')
+        bounds_group.addLayer(layer_gb_lasso);
+        map.addLayer(layer_gb_lasso);
+
+        var layer_supermarkets_distance = create_layer(gb_lasso_geography, 'gb_lasso_geography', 'mean_minutes_supermercados', supermarkets_distance_color_scheme, 'Distance to Supermarkets Index')
+        bounds_group.addLayer(layer_supermarkets_distance);
+
+        var layer_selectos_distance = create_layer(gb_lasso_geography, 'gb_lasso_geography', 'mean_minutes_selectos', selectos_distance_color_scheme, 'Distance to Selectos Index')
+        bounds_group.addLayer(layer_selectos_distance);
+
+        var layer_change_variables = create_layer(gb_lasso_geography, 'gb_lasso_geography', 'change_average', change_variables_color_scheme, 'Change Variable Index')
+        bounds_group.addLayer(layer_change_variables);
+
+        map.createPane('accessibility_geography');
+        map.getPane('accessibility_geography').style.zIndex = 400;
+        map.getPane('accessibility_geography').style['mix-blend-mode'] = 'normal';
+
+        var layer_accessibility_geography = create_layer(accessibility_geography, 'accessibility_geography', 'accessibility_index', accessibility_style, 'Accessibility Index')
+        bounds_group.addLayer(layer_accessibility_geography);
+        let bpi_col_data = []
+        for (let i = 0; i< gb_lasso_geography.length; i++){
+            bpi_col_data.push(gb_lasso_geography[i]['gb'])}
+        var prediction_list = bpi_col_data.filter(function(el) {
+            //return el.length && el==+el;
+            return !isNaN(parseFloat(el)) && isFinite(el);
+        });
+        prediction_list.sort(function(a, b){return b-a})
+        //prediction_list.reverse()
+        var valor_ponderado_list = []
+        var weighted_average_filter_val = prediction_list[600]
+
+        for (let i =0; i < gb_lasso_geography.length; i++){
+            if (gb_lasso_geography[i]['gb']  > weighted_average_filter_val){
+                weigthed_average_Val = ((gb_lasso_geography[i]['gb'] *.70) + (gb_lasso_geography[i]['mean_minutes_supermercados']*.10) + (gb_lasso_geography[i]['mean_minutes_selectos'] *.10))
+                gb_lasso_geography[i]['weighted_average'] = (weigthed_average_Val)
+            }
+        } 
+
+        var weighted_average = weighted_avg_layer(selectElement)
+
+        var cadenas = []
+        for (const {properties: {CADENA}} of supermercados_v2.features){
+            cadenas.push(CADENA)
+        }
+        var select_val = document.getElementById("selectChain");
+        let cadenas_unique = [... new Set(cadenas)]
+        cadenas_unique.sort()
+
+
+        let cadenas_color_scheme = []
+        let supermarket_colors = ['#a6cee3','#1f78b4','#b2df8a','#33a02c','#fb9a99','#e31a1c','#fdbf6f','#ff7f00','#cab2d6','#6a3d9a']
+        for (var i = 0; i < cadenas_unique.length; i++) {
+            cadenas_color_scheme.push([cadenas_unique[i], supermarket_colors[i]])
+            // var opt = cadenas_unique[i];
+            // var el = document.createElement("option");
+            // el.textContent = opt;
+            // el.value = opt;
+            // select_val.appendChild(el);  
+        }
+        function generateTableValues() {
+            // creates a <table> element and a <tbody> element
+            var tbl = document.getElementById("legend_table_values");
+            var tblBody = document.getElementById("legend_table_body_values");
+            var legend_div =  document.getElementById('leyenda_values')
+            
+            var max_min = [[prediction_style_color_scheme[49][0], 'Best Locations'], [prediction_style_color_scheme[30][0], 'Good Locations'], [prediction_style_color_scheme[15][0], 'Less Suitable'], [prediction_style_color_scheme[0][0], 'Least Suitable']]
+            // creating all cells
+            for (let i = 0; i < max_min.length; i++) {
+                // creates a table row
+                const row = document.createElement("tr");
+                for (let j = 0; j < max_min[i].length; j++) {
+                    if (j ==0){
+                        const cell = document.createElement("td");
+                        const cellText = document.createTextNode("~~~~");
+                        var container = document.createElement("span");
+                        container.style.color = max_min[i][j]
+                        container.style.backgroundColor = max_min[i][j]
+                        container.appendChild(cellText)
+                        cell.appendChild(container);
+                        row.appendChild(cell);
+                    } else{
+                        const cell = document.createElement("td");
+                        const cellText = document.createTextNode(max_min[i][j]);
+                        cell.appendChild(cellText);
+                        row.appendChild(cell);
+                    }
+                }
+
+                // add the row to the end of the table body
+                tblBody.appendChild(row);
+            }
+
+            // put the <tbody> in the <table>
+            tbl.appendChild(tblBody);
+            // sets the border attribute of tbl to '2'
+            tbl.setAttribute("border", "2");
+            }
+        function generateTable() {
+            // creates a <table> element and a <tbody> element
+            var tbl = document.getElementById("legend_table");
+            var tblBody = document.getElementById("legend_table_body");
+            var legend_div =  document.getElementById('leyenda')
+
+            // creating all cells
+            for (let i = 0; i < cadenas_color_scheme.length; i++) {
+                // creates a table row
+                const row = document.createElement("tr");
+                for (let j = 0; j < cadenas_color_scheme[i].length; j++) {
+                    if (j == 0){
+                        const cell = document.createElement("td");
+                        const cellText = document.createTextNode(cadenas_color_scheme[i][j]);
+                        
+                        cell.appendChild(cellText);
+                        row.appendChild(cell);
+                    } else{
+                        const cell = document.createElement("td");
+                        cell.style.verticalAlign = 'middle'
+                        const cellText = document.createTextNode(cadenas_color_scheme[i][0].substring(0,2));
+                        var container = document.createElement("span");
+                        container.style.borderRadius  = "50%";
+                        container.style.backgroundColor = cadenas_color_scheme[i][j]
+                        container.style.display = 'table'
+                        container.style.textAlign= 'center'
+                        container.style.margin = '0 auto'
+                        container.style.verticalAlign = 'middle'
+                        container.appendChild(cellText)
+                        cell.appendChild(container);
+                        row.appendChild(cell);
+                    }
+                }
+
+                // add the row to the end of the table body
+                tblBody.appendChild(row);
+            }
+
+            // put the <tbody> in the <table>
+            tbl.appendChild(tblBody);
+            // sets the border attribute of tbl to '2'
+            tbl.setAttribute("border", "2");
+            }
+            generateTableValues()
+        generateTable()
+        map.createPane('supermarket_locations');
+        map.getPane('supermarket_locations').style.zIndex = 401;
+        //var layer_supermercados = supermarket_layer()
+        var osmGeocoder = new L.Control.Geocoder({ 
+            collapsed: false,
+            position: 'topright',
+            text: 'Search',
+            title: 'Testing'
+        }).addTo(map);
+        document.getElementsByClassName('leaflet-control-geocoder-icon')[0]
+        .className += ' fa fa-search';
+        document.getElementsByClassName('leaflet-control-geocoder-icon')[0]
+        .title += 'Search for a place';
+        var data_for_grouped_overlays = {}
+
+        var markers = L.markerClusterGroup().addTo(map);
+        for (let i = 0; i <cadenas_color_scheme.length; i++ ){
+            var label_name = cadenas_color_scheme[i][0].replace(/\s/g, '_')
+            label_name = label_name.replace(/,/, '')
+            window["Object"+i] = 'test'
+            window["Object"+i] = supermarket_layer(cadenas_color_scheme[i][0],cadenas_color_scheme[i][1] )
+            markers.addLayer(window["Object"+i])
+            data_for_grouped_overlays[cadenas_color_scheme[i][0]] = L.featureGroup.subGroup(markers, window["Object"+i]).addTo(map)
+            data_for_grouped_overlays[cadenas_color_scheme[i][0]]["_layers"] = window["Object"+i]["_layers"]
+        }
+        
+        map.addLayer(markers)
+
+        var groupedOverlays = {
+            "BPI Data": {
+                'Top Locations': weighted_average,
+                'Business Potencial for Supermarkets':layer_gb_lasso,
+                'Accessibility Index':layer_accessibility_geography,
+                'Average Distance to Supermarkets': layer_supermarkets_distance,
+                'Average Distance to Selectos': layer_selectos_distance,
+                'Growth Indicator for Area': layer_change_variables
+            }
+        };
+        groupedOverlays['Supermarket Locations'] = data_for_grouped_overlays
+        var options = {
+            exclusiveGroups: ["BPI Data"],
+            groupCheckboxes:true
+        }
+
+        function getBasemap() {
+            selectElement = document.querySelector('#basemaps');
+            output = selectElement.options[selectElement.selectedIndex].value;
+            console.log(output)
+            if(map.hasLayer(basemap_layer)){
+                map.removeLayer(basemap_layer)
+                basemap_layer = L.tileLayer.provider(output);
+            }
+            basemap_layer.base_layer = "base_layer"
+            basemap_layer.addTo(map);
+        }
+
+        var baseMaps = {};
+        
+        map.addControl(new L.Control.Fullscreen({
+            title: {
+                'false': 'View Fullscreen',
+                'true': 'Exit Fullscreen'
+            }
+        }));
+        var layerControl = L.control.groupedLayers(baseMaps, groupedOverlays, options)
+        map.addControl(layerControl)
+
+        legend_popup('Business Potencial for Supermarkets', 'Popup1')
+        
+        var accessibility_layer = "//span[contains(text(), 'Accessibility Index')]"
+        var accessibility_layer_matching_element = document.evaluate(accessibility_layer, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+        popup_accessibility = document.getElementById('Popup2')
+        accessibility_layer_matching_element.appendChild(popup_accessibility)
+        accessibility_layer_matching_element.onmouseover = function(){
+            popup_accessibility.className = 'PopupHover';
+            accessibility_layer_matching_element.style.position = 'relative'
+        }
+        accessibility_layer_matching_element.onmouseout = function(){
+            popup_accessibility.className = 'Popup';
+        }
+
+        title_change("Business Potencial for Supermarkets")
+        map.on( 'overlayadd', function (event) {
+            active_layer_name = event.name
+            title_change( active_layer_name)
+        });
+
+
+        var growth_layer = "//span[contains(text(), 'Growth Indicator for Area')]"
+        var growth_layer_matching_element = document.evaluate(growth_layer, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+        popup_growth = document.getElementById('Popup5')
+        growth_layer_matching_element.appendChild(popup_growth)
+        growth_layer_matching_element.onmouseover = function(){
+            popup_growth.className = 'PopupHover';
+            growth_layer_matching_element.style.position = 'relative'
+        }
+        growth_layer_matching_element.onmouseout = function(){
+            popup_growth.className = 'Popup';
+        }
+        </script>
+    </body>
+</html>
